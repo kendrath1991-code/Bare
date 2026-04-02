@@ -111,7 +111,7 @@
 
   .content { padding: 40px 40px; }
 
-  /* Stats */
+  /* Stats & Filter */
   .stats-row {
     display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
     gap: 24px; margin-bottom: 40px;
@@ -127,7 +127,6 @@
   .stat-label { font-size: 13px; color: var(--muted); }
   .stat-value { font-size: 42px; font-weight: 700; color: var(--bayer-dark); font-family: "SF Mono", monospace; }
 
-  /* Filter & Table */
   .section-header {
     display: flex; align-items: center; justify-content: space-between;
     margin-bottom: 20px;
@@ -153,6 +152,7 @@
     color: #fff;
   }
 
+  /* Table */
   .table-card {
     background: var(--card);
     border: 1px solid var(--border);
@@ -434,22 +434,22 @@
       <div id="progressTrack" style="display:flex;gap:12px;margin-bottom:32px;"></div>
       <div class="detail-grid" id="detailGrid"></div>
 
-      <!-- 新增：医生团队 -->
+      <!-- 医生团队 -->
       <div style="margin-top:32px;">
         <div class="detail-label">医生团队</div>
         <div style="background:#F8FAFC;border:1px solid var(--border);border-radius:14px;padding:20px;">
-          <div style="display:flex;gap:20px;align-items:center;">
+          <div style="display:flex;gap:20px;align-items:center;margin-bottom:16px;">
             <div style="width:48px;height:48px;border-radius:50%;background:var(--bayer-blue);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:600;">李</div>
             <div>
-              <div style="font-weight:600;">李医生（主治医师）</div>
+              <div style="font-weight:600;">李明轩 主治医师</div>
               <div style="color:var(--muted);font-size:14px;">内分泌科 · 负责医学评估</div>
               <div style="color:var(--muted);font-size:14px;">电话：138-XXXX-XXXX</div>
             </div>
           </div>
-          <div style="margin-top:16px;display:flex;gap:20px;align-items:center;">
+          <div style="display:flex;gap:20px;align-items:center;">
             <div style="width:48px;height:48px;border-radius:50%;background:var(--bayer-green);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:600;">王</div>
             <div>
-              <div style="font-weight:600;">王医生（副主任医师）</div>
+              <div style="font-weight:600;">王晓琪 副主任医师</div>
               <div style="color:var(--muted);font-size:14px;">临床药理科 · 负责最终审批</div>
               <div style="color:var(--muted);font-size:14px;">电话：139-XXXX-XXXX</div>
             </div>
@@ -512,11 +512,11 @@ function renderTable() {
     const color = avatarColors[applications.indexOf(a) % avatarColors.length];
     const initials = a.name[0];
     const actions = (a.status === 'pending' || a.status === 'reviewing')
-      ? `<button class="action-btn approve" onclick="quickApprove('${a.id}',event)">批准</button>
-         <button class="action-btn reject" onclick="quickReject('${a.id}',event)">拒绝</button>`
-      : `<button class="action-btn" onclick="openModal('${a.id}',event)" style="background:#F1F5F9;color:var(--text);">详情</button>`;
+      ? `<button class="action-btn approve" onclick="quickApprove('${a.id}',event);event.stopImmediatePropagation();">批准</button>
+         <button class="action-btn reject" onclick="quickReject('${a.id}',event);event.stopImmediatePropagation();">拒绝</button>`
+      : `<button class="action-btn" onclick="openModal('${a.id}',event);event.stopImmediatePropagation();" style="background:#F1F5F9;color:var(--text);">详情</button>`;
 
-    return `<tr onclick="openModal('${a.id}')">
+    return `<tr onclick="openModal('${a.id}',event)">
       <td><div class="applicant-cell">
         <div class="applicant-avatar" style="background:${color}">${initials}</div>
         <div><div style="font-weight:600">${a.name}</div><div style="font-size:13px;color:var(--muted);font-family:monospace">${a.id}</div></div>
@@ -552,7 +552,7 @@ function filterTable(q) {
 }
 
 function openModal(id, e) {
-  if(e) e.stopPropagation();
+  if(e) e.stopImmediatePropagation();
   const a = applications.find(x => x.id === id);
   if(!a) return;
   currentAppId = id;
@@ -613,14 +613,14 @@ function reviewAction(status) {
 }
 
 function quickApprove(id, e) {
-  e.stopPropagation();
+  if(e) e.stopImmediatePropagation();
   applications.find(x => x.id === id).status = 'approved';
   renderTable();
   showToast('✅ 已批准');
 }
 
 function quickReject(id, e) {
-  e.stopPropagation();
+  if(e) e.stopImmediatePropagation();
   applications.find(x => x.id === id).status = 'rejected';
   renderTable();
   showToast('❌ 已拒绝');
