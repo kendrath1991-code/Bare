@@ -511,23 +511,34 @@ function renderTable() {
   tbody.innerHTML = data.map(a => {
     const color = avatarColors[applications.indexOf(a) % avatarColors.length];
     const initials = a.name[0];
-    const actions = (a.status === 'pending' || a.status === 'reviewing')
-      ? `<button class="action-btn approve" onclick="quickApprove('${a.id}',event);event.stopImmediatePropagation();">批准</button>
-         <button class="action-btn reject" onclick="quickReject('${a.id}',event);event.stopImmediatePropagation();">拒绝</button>`
-      : `<button class="action-btn" onclick="openModal('${a.id}',event);event.stopImmediatePropagation();" style="background:#F1F5F9;color:var(--text);">详情</button>`;
 
-    return `<tr onclick="openModal('${a.id}',event)">
-      <td><div class="applicant-cell">
-        <div class="applicant-avatar" style="background:${color}">${initials}</div>
-        <div><div style="font-weight:600">${a.name}</div><div style="font-size:13px;color:var(--muted);font-family:monospace">${a.id}</div></div>
-      </div></td>
-      <td><span style="background:#E6F4FF;color:var(--bayer-blue);padding:4px 12px;border-radius:8px;font-weight:600">${a.age}</span></td>
-      <td style="font-family:monospace">${a.bmi.toFixed(1)}</td>
-      <td><span style="padding:6px 16px;border-radius:9999px;background:#E6F4FF;color:var(--bayer-dark);font-size:13px">${a.caseName}</span></td>
-      <td style="color:var(--muted)">${a.hospital}</td>
-      <td style="font-family:monospace;color:var(--muted)">${a.date}</td>
-      <td><span class="status-badge" style="background:${statusStyle[a.status].bg};color:${statusStyle[a.status].color}">${statusLabel[a.status]}</span></td>
-      <td>${actions}</td>
+    let actionsHTML = '';
+    if (a.status === 'pending' || a.status === 'reviewing') {
+      actionsHTML = `
+        <button class="action-btn approve" onclick="quickApprove('${a.id}', event)">批准</button>
+        <button class="action-btn reject" onclick="quickReject('${a.id}', event)">拒绝</button>
+      `;
+    } else {
+      actionsHTML = `<button class="action-btn" onclick="openModal('${a.id}', event)" style="background:#F1F5F9;color:var(--text);">详情</button>`;
+    }
+
+    return `<tr>
+      <td onclick="openModal('${a.id}', event)">
+        <div class="applicant-cell">
+          <div class="applicant-avatar" style="background:${color}">${initials}</div>
+          <div>
+            <div style="font-weight:600">${a.name}</div>
+            <div style="font-size:13px;color:var(--muted);font-family:monospace">${a.id}</div>
+          </div>
+        </div>
+      </td>
+      <td onclick="openModal('${a.id}', event)"><span style="background:#E6F4FF;color:var(--bayer-blue);padding:4px 12px;border-radius:8px;font-weight:600">${a.age}</span></td>
+      <td onclick="openModal('${a.id}', event)" style="font-family:monospace">${a.bmi.toFixed(1)}</td>
+      <td onclick="openModal('${a.id}', event)"><span style="padding:6px 16px;border-radius:9999px;background:#E6F4FF;color:var(--bayer-dark);font-size:13px">${a.caseName}</span></td>
+      <td onclick="openModal('${a.id}', event)" style="color:var(--muted)">${a.hospital}</td>
+      <td onclick="openModal('${a.id}', event)" style="font-family:monospace;color:var(--muted)">${a.date}</td>
+      <td onclick="openModal('${a.id}', event)"><span class="status-badge" style="background:${statusStyle[a.status].bg};color:${statusStyle[a.status].color}">${statusLabel[a.status]}</span></td>
+      <td>${actionsHTML}</td>
     </tr>`;
   }).join('');
 
@@ -552,9 +563,9 @@ function filterTable(q) {
 }
 
 function openModal(id, e) {
-  if(e) e.stopImmediatePropagation();
+  if (e) e.stopImmediatePropagation();
   const a = applications.find(x => x.id === id);
-  if(!a) return;
+  if (!a) return;
   currentAppId = id;
 
   document.getElementById('modalTitle').textContent = `${a.name} · 申请详情`;
@@ -575,7 +586,7 @@ function openModal(id, e) {
   });
   document.getElementById('progressTrack').innerHTML = progressHTML;
 
-  // Detail Grid
+  // Detail content
   let gridHTML = `
     <div><div class="detail-label">申请人</div><div class="detail-value">${a.name}</div></div>
     <div><div class="detail-label">申请编号</div><div class="detail-value">${a.id}</div></div>
@@ -613,14 +624,14 @@ function reviewAction(status) {
 }
 
 function quickApprove(id, e) {
-  if(e) e.stopImmediatePropagation();
+  if (e) e.stopImmediatePropagation();
   applications.find(x => x.id === id).status = 'approved';
   renderTable();
   showToast('✅ 已批准');
 }
 
 function quickReject(id, e) {
-  if(e) e.stopImmediatePropagation();
+  if (e) e.stopImmediatePropagation();
   applications.find(x => x.id === id).status = 'rejected';
   renderTable();
   showToast('❌ 已拒绝');
