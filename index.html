@@ -111,7 +111,7 @@
 
   .content { padding: 40px 40px; }
 
-  /* Stats & Filter */
+  /* Stats */
   .stats-row {
     display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
     gap: 24px; margin-bottom: 40px;
@@ -127,6 +127,7 @@
   .stat-label { font-size: 13px; color: var(--muted); }
   .stat-value { font-size: 42px; font-weight: 700; color: var(--bayer-dark); font-family: "SF Mono", monospace; }
 
+  /* Filter */
   .section-header {
     display: flex; align-items: center; justify-content: space-between;
     margin-bottom: 20px;
@@ -152,7 +153,7 @@
     color: #fff;
   }
 
-  /* Table */
+  /* Table - 关键修复：只在非按钮区域触发详情 */
   .table-card {
     background: var(--card);
     border: 1px solid var(--border);
@@ -177,11 +178,14 @@
     padding: 18px 24px;
     font-size: 15px;
     border-top: 1px solid var(--border);
+    position: relative;
   }
 
-  tr:hover { background: rgba(0,188,255,0.05); }
+  .action-cell {
+    white-space: nowrap;
+  }
 
-  .applicant-cell { display: flex; align-items: center; gap: 14px; }
+  .applicant-cell { display: flex; align-items: center; gap: 14px; cursor: pointer; }
 
   .applicant-avatar {
     width: 40px; height: 40px; border-radius: 50%;
@@ -203,6 +207,7 @@
     font-weight: 600;
     border: none;
     cursor: pointer;
+    margin-right: 8px;
   }
 
   .action-btn.approve { background: var(--bayer-green); color: #fff; }
@@ -512,18 +517,18 @@ function renderTable() {
     const color = avatarColors[applications.indexOf(a) % avatarColors.length];
     const initials = a.name[0];
 
-    let actionsHTML = '';
+    let actionHTML = '';
     if (a.status === 'pending' || a.status === 'reviewing') {
-      actionsHTML = `
-        <button class="action-btn approve" onclick="quickApprove('${a.id}', event)">批准</button>
-        <button class="action-btn reject" onclick="quickReject('${a.id}', event)">拒绝</button>
+      actionHTML = `
+        <button class="action-btn approve" onclick="quickApprove('${a.id}', event); event.stopImmediatePropagation();">批准</button>
+        <button class="action-btn reject" onclick="quickReject('${a.id}', event); event.stopImmediatePropagation();">拒绝</button>
       `;
     } else {
-      actionsHTML = `<button class="action-btn" onclick="openModal('${a.id}', event)" style="background:#F1F5F9;color:var(--text);">详情</button>`;
+      actionHTML = `<button class="action-btn" onclick="openModal('${a.id}', event); event.stopImmediatePropagation();" style="background:#F1F5F9;color:var(--text);">详情</button>`;
     }
 
     return `<tr>
-      <td onclick="openModal('${a.id}', event)">
+      <td class="clickable" onclick="openModal('${a.id}', event)">
         <div class="applicant-cell">
           <div class="applicant-avatar" style="background:${color}">${initials}</div>
           <div>
@@ -532,13 +537,13 @@ function renderTable() {
           </div>
         </div>
       </td>
-      <td onclick="openModal('${a.id}', event)"><span style="background:#E6F4FF;color:var(--bayer-blue);padding:4px 12px;border-radius:8px;font-weight:600">${a.age}</span></td>
-      <td onclick="openModal('${a.id}', event)" style="font-family:monospace">${a.bmi.toFixed(1)}</td>
-      <td onclick="openModal('${a.id}', event)"><span style="padding:6px 16px;border-radius:9999px;background:#E6F4FF;color:var(--bayer-dark);font-size:13px">${a.caseName}</span></td>
-      <td onclick="openModal('${a.id}', event)" style="color:var(--muted)">${a.hospital}</td>
-      <td onclick="openModal('${a.id}', event)" style="font-family:monospace;color:var(--muted)">${a.date}</td>
-      <td onclick="openModal('${a.id}', event)"><span class="status-badge" style="background:${statusStyle[a.status].bg};color:${statusStyle[a.status].color}">${statusLabel[a.status]}</span></td>
-      <td>${actionsHTML}</td>
+      <td class="clickable" onclick="openModal('${a.id}', event)"><span style="background:#E6F4FF;color:var(--bayer-blue);padding:4px 12px;border-radius:8px;font-weight:600">${a.age}</span></td>
+      <td class="clickable" onclick="openModal('${a.id}', event)" style="font-family:monospace">${a.bmi.toFixed(1)}</td>
+      <td class="clickable" onclick="openModal('${a.id}', event)"><span style="padding:6px 16px;border-radius:9999px;background:#E6F4FF;color:var(--bayer-dark);font-size:13px">${a.caseName}</span></td>
+      <td class="clickable" onclick="openModal('${a.id}', event)" style="color:var(--muted)">${a.hospital}</td>
+      <td class="clickable" onclick="openModal('${a.id}', event)" style="font-family:monospace;color:var(--muted)">${a.date}</td>
+      <td class="clickable" onclick="openModal('${a.id}', event)"><span class="status-badge" style="background:${statusStyle[a.status].bg};color:${statusStyle[a.status].color}">${statusLabel[a.status]}</span></td>
+      <td class="action-cell">${actionHTML}</td>
     </tr>`;
   }).join('');
 
@@ -571,7 +576,7 @@ function openModal(id, e) {
   document.getElementById('modalTitle').textContent = `${a.name} · 申请详情`;
   document.getElementById('modalSub').textContent = `编号：${a.id}　·　提交日期：${a.date}`;
 
-  // Progress
+  // Progress Track
   const steps = ['提交申请','资料核查','医学评估','最终审批'];
   const stepIndex = {pending:0, reviewing:1, approved:3, rejected:1}[a.status];
   let progressHTML = '';
